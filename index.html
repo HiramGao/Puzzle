@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>拼图</title>
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        #canvas{
+            width: 900px;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+</body>
+<script>
+    !function () {
+        function Puzzle() {
+            if (!this instanceof Puzzle) {
+                return new Puzzle()
+            }
+            this.canvas = document.getElementById('canvas')
+            this.context = this.canvas.getContext('2d')
+        }
+
+        var fn = Puzzle.prototype;
+        fn.init = function () {
+
+        }
+        fn.loadImage = function (imgUrl) {
+            var img = new Image(),
+                self = this
+            img.src = imgUrl;
+            this.canvas.width = 900
+            this.canvas.height = 900
+            img.onload = function () //确保图片已经加载完毕
+            {
+                console.dir(img);
+                self.context.drawImage(img,0,0,900,900);
+            }
+            return this;
+        };
+        new Puzzle().loadImage("./shulan.jpg")
+    }();
+</script>
+</html>
