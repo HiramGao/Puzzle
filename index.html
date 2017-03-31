@@ -1,352 +1,485 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>拼图</title>
-  <meta name="viewport"
-        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <style>
-    #canvas {
-      display: block;
-      margin: auto;
-      width: 1110px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>拼图</title>
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <style>
+        html, body {
+            min-height: 100%;
+        }
+
+        .option-area {
+            width: 90%;
+            margin: auto;
+            margin-top: 20px;
+        }
+
+        #canvas {
+            display: block;
+            margin: auto;
+            margin-top: 20px;
+            width: 90%;
+            box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        .option-area label, .option-area button {
+            color: #fff;
+            font-size: 16px;
+            background-color: #26a69a;
+            text-align: center;
+            letter-spacing: .5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 2px;
+            display: inline-block;
+            height: 36px;
+            line-height: 36px;
+            padding: 0 2rem;
+            text-transform: uppercase;
+            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+        }
+        .option-area span{
+            font-size: 16px;
+        }
+        .option-area input[type="text"]{
+            display: inline-block;
+            width: 20px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 300;
+            height: 45px;
+            margin: 0;
+            padding: 0 15px;
+            border: 0;
+            background-color: transparent;
+            border: none;
+            border-bottom: 1px solid #9e9e9e;
+            border-radius: 0;
+            outline: none;
+            box-shadow: none;
+            box-sizing: content-box;
+        }
+        </style>
 </head>
 <body>
-
+<div class="option-area">
+    <label for="upload-image">选择图片</label>
+    <input id="upload-image" style="display: none;" type="file" value="上传图片" accept="image/png,image/gif,image/jpeg"/>
+    <span>行<input id="row" type="text" value="2"></span>
+    <span>列<input id="col" type="text" value="2"></span>
+    <button id="reset">重新生成</button>
+</div>
 <canvas id="canvas"></canvas>
+<script src="./Sprite.js"></script>
 </body>
 <script>
-  !function () {
-    function Sprite(canvas, x, y, w, h, rotation) {
-      if (!this instanceof Sprite) {
-        return new Sprite()
-      }
-      this.canvas = canvas;
-      this.ctx = this.canvas.getContext('2d');
-      //坐标
-      this.x = x;
-      this.y = y;
-      //大小
-      this.w = w;
-      this.h = h;
-      //旋转角度
-      this.rotation = rotation;
-      this.DEG_TO_RAD/*CONST*/ = Math.PI / 180;  // 一角度多少弧度
-      this._object = []; // 存放Sprite
-    }
-
-    var SpriteFn = Sprite.prototype;
-
-    //将锚点放到中心点
-    SpriteFn._beforeDraw = function () {
-      var ctx = this.ctx;
-
-      ctx.translate(this.w / 2 + this.x, this.h / 2 + this.y);
-      if (this.rotation % 360 !== 0) {
-        ctx.rotate(this.DEG_TO_RAD * this.rotation);
-      }
-      ctx.translate(-this.w / 2 - this.x, -this.h / 2 - this.y);
-
-      this.draw();   // 画的方法
-      this._drawall(); // 画出所有子Sprite
-
-
-      return this;
-    };
-
-    SpriteFn.draw = function () {
-      //实现这个方法
-    };
-    SpriteFn.run = function () {
-      return this._beforeDraw();
-    };
-    SpriteFn._drawall = function () {
-      var ctx = this.ctx;
-      if (this._object.length > 0) {
-        for (var i = 0, obj; obj = this._object[i]; i++) {
-          ctx.save();
-          obj.run();
-          ctx.restore()
-        }
-      }
-      return this;
-    };
-    SpriteFn.child = function (index) {
-      if (index !== void 0) {
-        return this._object[index]
-      } else {
-        return this._object;
-      }
-    };
-    //添加子精灵
-    SpriteFn.addChild = function (obj) {
-      this._object.push(obj);
-      return this;
-    };
-    //移除子精灵
-    SpriteFn.removeChild = function (obj) {
-      if (this.child().indexOf(obj) !== void 0) {
-        this._object.splice(this.child().indexOf(obj), 1)
-      }
-      return this;
-    };
-
-
-    var canvas = document.getElementById('canvas');
-
-    var cutRow = 2;
-    /*行*/
-    var cutCol = 2;
-    /*列*/
-
-    var leftAreaWidth = 900;
-    var rightAreaWidth = 900;
-    var areaHeight = 900;
-    var areaGap = 50;
-
-    var stage = new Sprite(canvas, 0, 0, leftAreaWidth + areaGap + rightAreaWidth, areaHeight, 0);
-    stage.init = function () {
-      var canvas = this.canvas;
-      canvas.width = this.w;
-      canvas.height = this.h;
-      this.collisionPoint = [];
-      return this
-    };
-
-    stage.stroke = function (startPoint, endPoint) {
-      var ctx = this.ctx;
-      ctx.beginPath();
-      ctx.strokeStyle = "rgba(0,0,0,0.5)";
-      ctx.lineWidth = 1;
-      ctx.moveTo(startPoint.x, startPoint.y);
-      ctx.lineTo(endPoint.x, endPoint.y);
-      ctx.fill();
-      ctx.stroke();
-      ctx.closePath();
-      return this;
-    };
-    stage.draw = function () {
-      //左边为拼图区域，右边为图片碎片区域
-
-      var canvas = this.canvas;
-      //画边框
-      var ctx = this.ctx;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.rect(0, 0, canvas.width, canvas.height);
-      ctx.stroke();
-      this
-        .stroke(/*划分割线*/
-          {x: leftAreaWidth, y: 0}, //线开始
-          {x: leftAreaWidth, y: canvas.height}//线结束
-        )
-        .stroke(/*划分割线*/
-          {x: leftAreaWidth + areaGap, y: 0}, //线开始
-          {x: leftAreaWidth + areaGap, y: canvas.height}//线结束
-        );
-      return this;
-    };
-
-    stage.addEvent = function () {
-      var c = this.canvas;
-      var self = this;
-      c.addEventListener("mousemove", move, false);
-      c.addEventListener("mousedown", down, false);
-      c.addEventListener("mouseup", up, false);
-
-      var isDrag = false;
-
-
-      var lastPoint;
-
-      function move(e) {
-        var currentPoint;
-        if (isDrag) {
-          console.log(self.child().length - 1);
-          var child = self.child(self.child().length - 1);
-          currentPoint = getPointOnCanvas(c, e.pageX, e.pageY);
-          child.x = child.x + currentPoint.x - lastPoint.x;
-          child.y = child.y + currentPoint.y - lastPoint.y;
-          lastPoint = currentPoint;
-        }
-      }
-
-
-      function down(e) {
-        var canvasPoint = getPointOnCanvas(c, e.pageX, e.pageY);
-        var child = self.child();
-        var len = child.length;
-
-        while (len--) {
-          if (child[len].isPointInSelf(canvasPoint)) {
-            var tmpChild = child[len];
-            self.removeChild(tmpChild);
-            self.addChild(tmpChild);
-            lastPoint = canvasPoint;
-            self.run();
-            isDrag = true;
-            break;
-          }
-        }
-      }
-
-      function up(e) {
-        if (isDrag) {
-          isDrag = false;
-          //判断靠近点
-          checkCollisionPoint()
-        }
-      }
-
-      function getPointOnCanvas(canvas, x, y) {
-        var bbox = canvas.getBoundingClientRect();
-        return {
-          x: Math.round((x - bbox.left ) * (canvas.width / bbox.width)),
-          y: Math.round((y - bbox.top) * (canvas.height / bbox.height))
-        };
-      }
-
-      function checkCollisionPoint() {
-        var child = self.child();
-        var len = child.length;
-        var currentChild;
-        while (len--) {
-          currentChild = child[len];
-//            判断在左侧区域
-          if (currentChild.x < 900) {
-            var dist = self.collisionPoint.map(function (point) {
-              var l1 = point.x - currentChild.x;
-              var l2 = point.y - currentChild.y;
-              return Math.sqrt(Math.pow(l1, 2) + Math.pow(l2, 2));
-            });
-            var targetPoint = self.collisionPoint[dist.indexOf(Math.min.apply(Math, dist))];
-            currentChild.toTarget(targetPoint);
-          }
-        }
-      }
-
-      return this;
-    };
-
-    stage.setCollisionPoint = function (x, y) {
-      this.collisionPoint.push({x: x, y: y})
-      return this
-    };
-
-    function ImageSprite(canvas, x, y, w, h, rotation, imgInfo) {
-      Sprite.call(this, canvas, x, y, w, h, rotation)
-      this.img = img;
-      this.imgx = imgInfo.x;
-      this.imgy = imgInfo.y;
-      this.imgw = imgInfo.w;
-      this.imgh = imgInfo.h;
-    }
-
+  document.addEventListener("DOMContentLoaded", function () {
     !function () {
-      var Super = function () {
+      var canvas = document.getElementById('canvas');
+
+      var row = document.getElementById("row")
+      var col = document.getElementById("col")
+      var reset = document.getElementById("reset")
+
+      row.addEventListener("input", inputNumber)
+      col.addEventListener("input", inputNumber)
+      row.addEventListener("change", changeNumber)
+      row.addEventListener("change", function (e) {
+        cutRow = ~~e.target.value;
+      })
+      col.addEventListener("change", changeNumber)
+      col.addEventListener("change", function (e) {
+        cutCol = ~~e.target.value;
+      })
+
+      reset.addEventListener("click", function () {
+        stage.reset();
+      });
+
+      function inputNumber(e) {
+        var value = e.target.value.replace(/[^\d]/g, "");
+        e.target.value = value;
+      }
+
+      function changeNumber(e) {
+        var value = ~~e.target.value;
+        if (value < 2) {
+          value = 2;
+        } else if (value > 10) {
+          value = 10
+        }
+        e.target.value = value;
+      }
+
+
+      var cutRow = row.value;
+        /*行*/
+      var cutCol = col.value;
+        /*列*/
+
+      var leftAreaWidth = 900; //左边区域宽度
+      var rightAreaWidth = 900; //右边区域宽度
+      var areaHeight = 900; //高度
+      var areaGap = 50; //间隙宽度
+
+      //舞台
+      var stage = new Sprite(canvas, 0, 0, leftAreaWidth + areaGap + rightAreaWidth, areaHeight, 0);
+      stage.init = function () {
+        var canvas = this.canvas;
+        canvas.width = this.w;
+        canvas.height = this.h;
+        this.collisionPoint = []; //碰撞点
+        this.success = false;
+        return this
       };
-      Super.prototype = Sprite.prototype;
-      ImageSprite.prototype = new Super();
-    }();
-    var ImageSpriteFn = ImageSprite.prototype;
+      //划线
+      stage.stroke = function (startPoint, endPoint) {
+        var ctx = this.ctx;
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(0,0,0,0.5)";
+        ctx.lineWidth = 1;
+        ctx.moveTo(startPoint.x, startPoint.y);
+        ctx.lineTo(endPoint.x, endPoint.y);
+        ctx.fill();
+        ctx.stroke();
+        ctx.closePath();
+        return this;
+      };
+      //绘制函数
+      stage.draw = function () {
+        //左边为拼图区域，右边为图片碎片区域
 
-    ImageSpriteFn.draw = function () {
-      with (this) {
-        toTarget();
-        ctx.drawImage(img, imgx, imgy, imgw, imgh, x, y, w, h);
-      }
-    };
-    ImageSpriteFn.isPointInSelf = function (canvasPoint) {
-      var x = this.x;
-      var y = this.y;
-      var w = this.w;
-      var h = this.h;
-      var r = this.rotation;
-      var cx = canvasPoint.x;
-      var cy = canvasPoint.y;
-      switch (r) {
-        case 0 :
-        case 180 :
-          if (cx > x && cx < x + w && cy > y && cy < y + h) {
-            return true;
+        var canvas = this.canvas;
+        //画边框
+        var ctx = this.ctx;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.rect(0, 0, canvas.width, canvas.height);
+
+        this
+          .stroke(/*划分割线*/
+            {x: leftAreaWidth, y: 0}, //线开始
+            {x: leftAreaWidth, y: canvas.height}//线结束
+          )
+          .stroke(/*划分割线*/
+            {x: leftAreaWidth + areaGap, y: 0}, //线开始
+            {x: leftAreaWidth + areaGap, y: canvas.height}//线结束
+          );
+        return this;
+      };
+
+      //监听鼠标函数
+      stage.addEvent = function () {
+        var c = this.canvas;
+        var self = this;
+
+        var isDrag = false;
+        var isClick = false;
+        var downTime;
+
+        var lastPoint;
+
+        c.addEventListener("mousemove",
+          function (e) {
+            if (!self.success)
+              move(e)
           }
-          break;
-        case 90:
-        case 270:
-          break;
-      }
-      console.log(canvasPoint);
-      return false;
-    };
-    ImageSpriteFn.toTarget = function (targetPoint) {
-      if (targetPoint) {
-        this.targetPoint = targetPoint;
-      }else {
-        if(this.targetPoint){
-          if(this.x !== this.targetPoint.x){
-            if(this.x < this.targetPoint - 0.2){
-              this.x = this.x + 0.2;
-            }else if(this.x > this.targetPoint + 0.2){
-              this.x = this.x - 0.2;
-            }else {
-              this.x = this.x = this.targetPoint.x;
+          , false);
+        c.addEventListener("mousedown", function (e) {
+          if (!self.success)
+            down(e)
+        }, false);
+        c.addEventListener("mouseup", function (e) {
+          if (!self.success)
+            up(e)
+        }, false);
+        document.addEventListener('mousemove', function (e) {
+          console.log(e.target == c);
+          if (!(e.target == c)) {
+            console.log(false);
+            isDrag = false;
+            isClick = false;
+          }
+        }, false);
+
+
+        function move(e) {
+          var currentPoint;
+          if (isDrag) {
+            var child = self.child(self.child().length - 1);
+            currentPoint = getPointOnCanvas(c, e.pageX, e.pageY);
+            child.x = child.x + currentPoint.x - lastPoint.x;
+            child.y = child.y + currentPoint.y - lastPoint.y;
+            lastPoint = currentPoint;
+          }
+
+        }
+
+
+        function down(e) {
+          var canvasPoint = getPointOnCanvas(c, e.pageX, e.pageY);
+          var child = self.child();
+          var len = child.length;
+          downTime = new Date().getTime();
+          while (len--) {
+            if (child[len].isPointInSelf(canvasPoint)) {
+              var tmpChild = child[len];
+              self.removeChild(tmpChild);
+              self.addChild(tmpChild);
+              lastPoint = canvasPoint;
+              isDrag = true;
+              isClick = true;
+              break;
             }
-
-            console.log('aaaaaaaaaaaaaa');
-          }
-          if(this.y !== this.targetPoint.y){
-
           }
         }
+
+        function up(e) {
+          if ((new Date).getTime() - downTime < 100 && isClick) {
+
+            var child = self.child(self.child().length - 1);
+            child.rotate();
+          }
+          if (isDrag) {
+            //判断靠近点
+            checkCollisionPoint()
+          }
+          isDrag = false;
+          isClick = false;
+        }
+
+        function getPointOnCanvas(canvas, x, y) {
+          var bbox = canvas.getBoundingClientRect();
+          return {
+            x: Math.round((x - bbox.left ) * (canvas.width / bbox.width)),
+            y: Math.round((y - bbox.top) * (canvas.height / bbox.height))
+          };
+        }
+
+        function checkCollisionPoint() {
+          var child = self.child();
+          var len = child.length;
+          var currentChild;
+          while (len--) {
+            currentChild = child[len];
+//            判断在左侧区域
+            if (currentChild.x < 900 && currentChild.rotation === 0) {
+              var dist = self.collisionPoint.map(function (point) {
+                var l1 = point.x - currentChild.x;
+                var l2 = point.y - currentChild.y;
+                return Math.sqrt(Math.pow(l1, 2) + Math.pow(l2, 2));
+              });
+              var targetPoint = self.collisionPoint[dist.indexOf(Math.min.apply(Math, dist))];
+              currentChild.toTarget(targetPoint);
+            }
+          }
+        }
+
+        return this;
+      };
+
+      //添加碰撞点
+      stage.addCollisionPoint = function (x, y) {
+        this.collisionPoint.push({x: x, y: y});
+        return this
       }
-    };
-    var img = new Image();
-    img.onload = function () {
+      //添加新的图片
+      stage.addNewImage = function (img) {
+        this.success = false;
+        stage.clearChild();
+        stage.img = img;
+        var currentRow = 0;
+        var currentCol = 0;
+        var cutImageWidth = img.width / cutCol;
+        var cutImageHeight = img.height / cutRow;
+        var canvasCutWidth = leftAreaWidth / cutCol;
+        var canvasCutHeight = areaHeight / cutRow;
+        //画图
+        for (currentRow = 0; currentRow < cutRow; currentRow++) {
+          for (currentCol = 0; currentCol < cutCol; currentCol++) {
+            var randomPoint = randomCoordinate();
+            this
+              .addCollisionPoint(canvasCutWidth * currentCol + currentCol, canvasCutHeight * currentRow + currentRow)
+              .addChild(
+                new ImageSprite(
+                  this.canvas,
+                  randomPoint.x, randomPoint.y, /*图片放置位置左上角*/
+                  canvasCutWidth, canvasCutHeight, /*图片放置宽高*/
+                  randomAngle(),
+                  {
+                    img: img,
+                    x: cutImageWidth * currentCol, y: cutImageHeight * currentRow, /*图片小块左上角*/
+                    w: cutImageWidth, h: cutImageHeight, /*图片裁剪宽高*/
+                    originalPoint: {
+                      x: canvasCutWidth * currentCol + currentCol,
+                      y: canvasCutHeight * currentRow + currentRow,
+                    }
+                  })
+              );
+          }
+        }
 
-      stage.init();
+        function randomCoordinate() {
+          return {
+            x: ~~(Math.random() * (rightAreaWidth - canvasCutWidth) + leftAreaWidth + areaGap),
+            y: ~~(Math.random() * (areaHeight - canvasCutHeight)),
+          };
+        }
 
-      currentRow = 0;
-      currentCol = 0;
-      var cutImageWidth = img.width / cutCol;
-      var cutImageHeight = img.height / cutRow;
-      //画图
-      for (currentRow = 0; currentRow < cutRow; currentRow++) {
-        for (currentCol = 0; currentCol < cutCol; currentCol++) {
-          stage
-            .setCollisionPoint(cutImageWidth * currentCol + currentCol, cutImageHeight * currentRow + currentRow)
-            .addChild(
-              new ImageSprite(
-                canvas,
-                cutImageWidth * currentCol + currentCol, cutImageHeight * currentRow + currentRow, /*图片放置位置左上角*/
-                cutImageWidth, cutImageHeight, /*图片放置宽高*/
-                0,
-                {
-                  img: img,
-                  x: cutImageWidth * currentCol, y: cutImageHeight * currentRow, /*图片小块左上角*/
-                  w: cutImageWidth, h: cutImageHeight/*图片裁剪宽高*/
-                })
-            );
+        function randomAngle() {
+          return ~~(Math.random() * 4) * 90;
+        }
+      };
+
+      stage.reset = function () {
+        if (this.img) {
+          stage.addNewImage(this.img)
         }
       }
 
+      //图片的精灵
+      function ImageSprite(canvas, x, y, w, h, rotation, imgInfo) {
+        Sprite.call(this, canvas, x, y, w, h, rotation);
+        this.img = imgInfo.img;
+        this.imgx = imgInfo.x;
+        this.imgy = imgInfo.y;
+        this.imgw = imgInfo.w;
+        this.imgh = imgInfo.h;
+        this.originalPoint = imgInfo.originalPoint; //正确位置的坐标
+        this.targetPoint = {}; //目标的坐标
+      }
+
+      //继承
+      !function () {
+        var Super = function () {
+        };
+        Super.prototype = Sprite.prototype;
+        ImageSprite.prototype = new Super();
+      }();
+
+      var ImageSpriteFn = ImageSprite.prototype;
+
+      //绘制函数
+      ImageSpriteFn.draw = function () {
+        with (this) {
+          toTarget();
+          ctx.drawImage(img, imgx, imgy, imgw, imgh, x, y, w, h);
+        }
+      };
+      //旋转90度
+      ImageSpriteFn.rotate = function () {
+        this.rotation = this.rotation + 90;
+        if (this.rotation >= 360) {
+          this.rotation = 0;
+        }
+      };
+      //判断是否在原来位置
+      ImageSpriteFn.isOriginalPoint = function () {
+        return this.x === this.originalPoint.x && this.y === this.originalPoint.y && this.rotation == 0;
+      };
+      //判断自己是否包含坐标
+      ImageSpriteFn.isPointInSelf = function (canvasPoint) {
+        var x = this.x;
+        var y = this.y;
+        var w = this.w;
+        var h = this.h;
+        var r = this.rotation;
+        var cx = canvasPoint.x;
+        var cy = canvasPoint.y;
+        switch (r) {
+          case 0 :
+          case 180 :
+            if (cx > x && cx < x + w && cy > y && cy < y + h) {
+              return true;
+            }
+            break;
+          case 90:
+          case 270:
+            if (cx > (w - h) / 2 + x
+              && cx < ((w - h) / 2 + x + h)
+              && cy > (h - w) / 2 + y
+              && cy < (h - w) / 2 + y + w) {
+              return true;
+            }
+            break;
+        }
+        return false;
+      };
+      //设置目标点或者向目标点移动
+      ImageSpriteFn.toTarget = function (targetPoint) {
+        if (targetPoint) {
+          this.targetPoint.x = targetPoint.x;
+          this.targetPoint.y = targetPoint.y;
+        } else {
+          if (this.targetPoint.x != void 0) {
+            if (this.x < this.targetPoint.x - 10) {
+              this.x = this.x + 10;
+            } else if (this.x > this.targetPoint.x + 10) {
+              this.x = this.x - 10;
+            } else {
+              this.x = this.targetPoint.x;
+              this.targetPoint.x = undefined;
+            }
+          }
+          if (this.targetPoint.y != void 0) {
+            if (this.y < this.targetPoint.y - 10) {
+              this.y = this.y + 10;
+            } else if (this.y > this.targetPoint.y + 10) {
+              this.y = this.y - 10;
+            } else {
+              this.y = this.targetPoint.y;
+              this.targetPoint.y = undefined;
+            }
+          }
+
+        }
+      };
       stage
-        .run()
+        .init()
+        .addRunMethod(function () {
+//          监测是够拼图完成
+          if (this.child().length > 0) {
+            if (this.child().every(function (c) {
+                return c.isOriginalPoint();
+              }) && !this.success) {
+              alert(('拼图完成'));
+              this.success = true;
+            }
+          }
+        })
         .addEvent();
 
-      function animation() {
+
+      function start() {
         stage
           .run();
-        requestAnimationFrame(animation);
+        requestAnimationFrame(start);
       }
 
-      requestAnimationFrame(animation);
+      requestAnimationFrame(start);
 
 
-      window.stage = stage
-    };
-    img.src = './shulan.jpg';
-  }();
+      document.getElementById("upload-image").addEventListener("change", function (e) {
+        var file = this.files[0];
+        if (!/image\/\w+/.test(file.type)) {
+          alert("文件必须为图片！");
+          return false;
+        }
+        var reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function (e) {
+          var img = new Image();
+          img.onload = function () {
+            stage.addNewImage(img);
+          }
+          img.src = e.target.result;
+        }
+      });
+
+    }();
+  }, false);
+
 </script>
 </html>
