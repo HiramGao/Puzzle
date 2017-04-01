@@ -1,78 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>拼图</title>
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <style>
-        html, body {
-            min-height: 100%;
-        }
+  <meta charset="UTF-8">
+  <title>拼图</title>
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <style>
+    html, body {
+      min-height: 100%;
+    }
 
-        .option-area {
-            width: 90%;
-            margin: auto;
-            margin-top: 20px;
-        }
+    html{
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    .option-area {
+      width: 90%;
+      margin: auto;
+      margin-top: 20px;
+    }
 
-        #canvas {
-            display: block;
-            margin: auto;
-            margin-top: 20px;
-            width: 90%;
-            box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.3);
-        }
+    #canvas {
+      display: block;
+      margin: auto;
+      margin-top: 20px;
+      width: 90%;
+      box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.3);
+    }
 
-        .option-area label, .option-area button {
-            color: #fff;
-            font-size: 16px;
-            background-color: #26a69a;
-            text-align: center;
-            letter-spacing: .5px;
-            cursor: pointer;
-            border: none;
-            border-radius: 2px;
-            display: inline-block;
-            height: 36px;
-            line-height: 36px;
-            padding: 0 2rem;
-            text-transform: uppercase;
-            box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
-        }
-        .option-area span{
-            font-size: 16px;
-        }
-        .option-area input[type="text"]{
-            display: inline-block;
-            width: 20px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 300;
-            height: 45px;
-            margin: 0;
-            padding: 0 15px;
-            border: 0;
-            background-color: transparent;
-            border: none;
-            border-bottom: 1px solid #9e9e9e;
-            border-radius: 0;
-            outline: none;
-            box-shadow: none;
-            box-sizing: content-box;
-        }
-        </style>
+    .option-area label, .option-area button {
+      color: #fff;
+      font-size: 16px;
+      background-color: #26a69a;
+      text-align: center;
+      letter-spacing: .5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 2px;
+      display: inline-block;
+      height: 36px;
+      line-height: 36px;
+      padding: 0 2rem;
+      text-transform: uppercase;
+      box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+    }
+
+    .option-area span {
+      font-size: 16px;
+    }
+
+    .option-area input[type="text"] {
+      display: inline-block;
+      width: 20px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 300;
+      height: 45px;
+      margin: 0;
+      padding: 0 15px;
+      border: 0;
+      background-color: transparent;
+      border: none;
+      border-bottom: 1px solid #9e9e9e;
+      border-radius: 0;
+      outline: none;
+      box-shadow: none;
+      box-sizing: content-box;
+    }
+  </style>
 </head>
 <body>
 <div class="option-area">
-    <label for="upload-image">选择图片</label>
-    <input id="upload-image" style="display: none;" type="file" value="上传图片" accept="image/png,image/gif,image/jpeg"/>
-    <span>行<input id="row" type="text" value="2"></span>
-    <span>列<input id="col" type="text" value="2"></span>
-    <button id="reset">重新生成</button>
+  <label for="upload-image">选择图片</label>
+  <input id="upload-image" style="display: none;" type="file" value="上传图片" accept="image/png,image/gif,image/jpeg"/>
+  <span>行<input id="row" type="text" value="2"></span>
+  <span>列<input id="col" type="text" value="2"></span>
+  <button id="reset">重新生成</button>
+  <div>左边为拼图区域，右边为图片碎片放置区域，单击小碎片会旋转，拼图区域内小碎片方向正确，会自动贴合</div>
 </div>
 <canvas id="canvas"></canvas>
+<img id="test" src="" alt="">
+<canvas id="testcanvas"></canvas>
 <script src="./Sprite.js"></script>
 </body>
 <script>
@@ -116,9 +128,9 @@
 
 
       var cutRow = row.value;
-        /*行*/
+      /*行*/
       var cutCol = col.value;
-        /*列*/
+      /*列*/
 
       var leftAreaWidth = 900; //左边区域宽度
       var rightAreaWidth = 900; //右边区域宽度
@@ -196,9 +208,7 @@
             up(e)
         }, false);
         document.addEventListener('mousemove', function (e) {
-          console.log(e.target == c);
           if (!(e.target == c)) {
-            console.log(false);
             isDrag = false;
             isClick = false;
           }
@@ -472,8 +482,28 @@
         reader.onload = function (e) {
           var img = new Image();
           img.onload = function () {
-            stage.addNewImage(img);
-          }
+            var tmpc = document.createElement("canvas");
+            tmpc.height = tmpc.width = 900;
+            var tmpCtx = tmpc.getContext("2d");
+            if (img.width >= img.height) {
+              tmpCtx.drawImage(
+                img,
+                (img.width - img.height) / 2, 0, img.height, img.height,
+                0, 0, tmpc.width, tmpc.height
+              );
+            }else{
+              tmpCtx.drawImage(
+                img,
+                0, (img.height - img.width) / 2, img.width, img.width,
+                0, 0, tmpc.width, tmpc.height
+              );
+            }
+            var image = new Image();
+            image.onload=function () {
+              stage.addNewImage(image);
+            }
+            image.src = tmpc.toDataURL("image/png");
+          };
           img.src = e.target.result;
         }
       });
