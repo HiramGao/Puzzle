@@ -215,28 +215,6 @@
         }, false);
 
 
-        c.addEventListener("touchmove",
-          function (e) {
-            if (!self.success)
-              move(e)
-          }
-          , false);
-        c.addEventListener("touchstart", function (e) {
-          if (!self.success)
-            down(e)
-        }, false);
-        c.addEventListener("touchend", function (e) {
-          if (!self.success)
-            up(e)
-        }, false);
-        document.addEventListener('touchmove', function (e) {
-          if (!(e.target == c)) {
-            isDrag = false;
-            isClick = false;
-          }
-        }, false);
-
-
         function move(e) {
           var currentPoint;
           if (isDrag) {
